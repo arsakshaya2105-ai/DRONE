@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+# DRONI - Main Application
+import argparse
+import time
+import random
+from . import config
+from .voice_guidance import VoiceGuidance
+from .pdr_engine import PDREngine
+
+def run_demo():
+    """Run a simulated voice-guided navigation demo (no sensors needed)."""
+    vg = VoiceGuidance()
+    vg.speak(config.WELCOME_MSG)
+    time.sleep(1)
+    vg.speak(config.CONFIRM_HEADING_MSG)
+    time.sleep(2)
+    vg.speak(config.ROUTE_START_MSG)
+    time.sleep(2)
+
+    for instr in config.SAMPLE_INSTRUCTIONS:
+        vg.speak(instr)
+        time.sleep(5)  # Simulate movement time
+
+def main():
+    parser = argparse.ArgumentParser(description="DRONI: Offline Tactical Navigation")
+    parser.add_argument("--map", type=str, default=config.DEFAULT_MAP_PATH,
+                        help="Path to .graphml map file")
+    parser.add_argument("--demo", action="store_true",
+                        help="Run voice demo without sensors")
+    args = parser.parse_args()
+
+    if args.demo:
+        print("[MODE] Running demo mode...")
+        run_demo()
+    else:
+        print("[MODE] Starting full navigation (sensor mode not implemented in demo)")
+        print("Note: Full PDR + map routing requires sensor integration and map processing.")
+        run_demo()  # Placeholder for full version
+
+if __name__ == "__main__":
+    main()
