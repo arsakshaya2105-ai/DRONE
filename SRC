@@ -38,3 +38,124 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# DRONI pdr_engine.py
+import math
+from . import config
+
+class PDREngine:
+    def __init__(self, initial_x=0.0, initial_y=0.0, initial_heading=0.0):
+        self.x = initial_x
+        self.y = initial_y
+        self.heading = initial_heading  # in degrees (0 = North, 90 = East)
+
+    def update_position(self, steps: int, current_heading: float = None):
+        """
+        Update position based on steps and heading.
+        If current_heading is None, use last known heading.
+        """
+        if current_heading is not None:
+            self.heading = current_heading
+
+        distance = steps * config.STEP_LENGTH_M
+        # Convert heading to radians (0° = North → 0 rad = East in math, so adjust)
+        rad = math.radians(90 - self.heading)  # North=0° → 90° in trig = π/2
+        self.x += distance * math.cos(rad)
+        self.y += distance * math.sin(rad)
+
+        return self.x, self.y
+
+    def reset(self, x=0.0, y=0.0, heading=0.0):
+        self.x, self.y, self.heading = x, y, heading
+
+# DRONI - Offline Voice Guidance Module
+import pyttsx3
+from . import config
+
+class VoiceGuidance:
+    def __init__(self):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('rate', config.VOICE_RATE)
+        self.engine.setProperty('volume', config.VOICE_VOLUME)
+        # Use eSpeak (Linux) or built-in TTS (Windows/macOS)
+        voices = self.engine.getProperty('voices')
+        if voices:
+            self.engine.setProperty('voice', voices[0].id)
+
+    def speak(self, text: str):
+        """Speak text aloud (blocking)."""
+        print(f"[VOICE] {text}")
+        self.engine.say(text)
+        self.engine.runAndWait()
+
+    def speak_async(self, text: str):
+        """Speak text (non-blocking - use with caution)."""
+        print(f"[VOICE] {text}")
+        self.engine.say(text)
+        # Note: pyttsx3.runAndWait() is blocking; async requires threading
+
+# DRONI - Map Loader (supports OSM-based .graphml files)
+import osmnx as ox
+import networkx as nx
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+def load_map(map_path: str):
+    """
+    Load a pre-processed OSM map (GraphML format).
+    Returns a NetworkX graph with 'risk' and 'length' edge attributes.
+    """
+    if not os.path.exists(map_path):
+        raise FileNotFoundError(f"Map not found: {map_path}")
+    
+    G = ox.load_graphml(map_path)
+    print(f"[MAP] Loaded {map_path} with {len(G.nodes)} nodes, {len(G.edges)} edges.")
+    return G
+
+def find_tactical_route(graph, origin_node, dest_node):
+    """
+    Find shortest path weighted by: distance + risk.
+    Assumes edges have 'length' and 'risk' attributes.
+    """
+    def weight_func(u, v, d):
+        return config.DISTANCE_WEIGHT * d.get('length', 1) + \
+               config.RISK_WEIGHT * d.get('risk', 0.5)
+
+    try:
+        route = nx.shortest_path(graph, origin_node, dest_node, weight=weight_func)
+        return route
+    except nx.NetworkXNoPath:
+        print("[ERROR] No path found between origin and destination.")
+        return None
+
+
+# DRONI - Configuration Settings
+
+# Voice Guidance
+VOICE_RATE = 160        # Words per minute
+VOICE_VOLUME = 1.0      # 0.0 to 1.0
+
+# PDR Defaults (adjust per soldier)
+STEP_LENGTH_M = 0.76    # Avg step length in meters
+COMPASS_ERROR_DEG = 5   # Expected compass noise
+
+# Tactical Routing
+RISK_WEIGHT = 0.4       # Weight for risk (0.0 = ignore, 1.0 = avoid all risk)
+DISTANCE_WEIGHT = 0.6   # Weight for distance
+
+# Map Defaults
+DEFAULT_MAP_PATH = "../maps/loc_sector.graphml"
+
+# Messages
+WELCOME_MSG = "DRONI active. GPS denied. Using inertial navigation."
+CONFIRM_HEADING_MSG = "Please confirm you are facing north."
+ROUTE_START_MSG = "Guidance initiated. Follow voice instructions."
+
+# Sample route instructions (for demo)
+SAMPLE_INSTRUCTIONS = [
+    "Move 120 meters northeast through tree cover. Enemy observation likely ahead — stay low.",
+    "Turn left in 30 meters. Enter ravine for concealment.",
+    "Checkpoint Alpha reached. Maintain radio silence.",
+    "Proceed 80 meters east along ridge shadow. Avoid open field."
+]
