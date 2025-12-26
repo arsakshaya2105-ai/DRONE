@@ -1,1 +1,10 @@
+PACKAGE             PURPOSE                                  NOTES
+osmnx==1.6.0    Download & process OpenStreetMap data       Stable; works with networkx==3.3
 
+networkx==3.    Graph-based pathfinding (Dijkstra)          Required by osmnx; avoid v3.4+ for compatibility
+
+geopy==2.4.0    Distance calculations (Great Circle)        Lightweight; no internet needed for basic use
+
+pyttsx3==2.90   Offline text-to-speech (TTS)               Works with espeak on Linux (Raspberry Pi)
+
+smbus2==0.4.    I²C communication (for GY-91 sensor)       Needed when integrating real IMU/magnetometer
