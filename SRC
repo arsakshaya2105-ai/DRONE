@@ -40,6 +40,7 @@ if __name__ == "__main__":
     main()
 
 
+
 # DRONI pdr_engine.py
 import math
 from . import config
@@ -69,6 +70,9 @@ class PDREngine:
     def reset(self, x=0.0, y=0.0, heading=0.0):
         self.x, self.y, self.heading = x, y, heading
 
+
+
+
 # DRONI - Offline Voice Guidance Module
 import pyttsx3
 from . import config
@@ -94,6 +98,9 @@ class VoiceGuidance:
         print(f"[VOICE] {text}")
         self.engine.say(text)
         # Note: pyttsx3.runAndWait() is blocking; async requires threading
+
+
+
 
 # DRONI - Map Loader (supports OSM-based .graphml files)
 import osmnx as ox
@@ -128,6 +135,8 @@ def find_tactical_route(graph, origin_node, dest_node):
     except nx.NetworkXNoPath:
         print("[ERROR] No path found between origin and destination.")
         return None
+
+
 
 
 # DRONI - Configuration Settings
