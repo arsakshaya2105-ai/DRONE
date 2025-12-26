@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# DRONI - Main Application
+#DRONI.PY
 import argparse
 import time
 import random
